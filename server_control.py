@@ -1,18 +1,16 @@
 import praw
 from dotenv import load_dotenv
 import os
+import time
 load_dotenv()
 
-
-if __name__ == "__main__":
+def main():
     # Initialize values from dotenv to connect using Reddit API
     USER_AGENT = os.getenv("USER_AGENT")
     CLIENT_SECRET = os.getenv("CLIENT_SECRET")
     CLIENT_ID = os.getenv("CLIENT_ID")
     REDDIT_NAME = os.getenv("REDDIT_NAME")
     PASSWORD = os.getenv("PASSWORD")
-
-    print(USER_AGENT + ", " + REDDIT_NAME + ", " + PASSWORD)
 
     # Get Reddit Instance
     r = None
@@ -25,11 +23,26 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
 
-    user = r.redditor("spez")
 
-    karma_by_subreddit = {}
-    for thing in user.submissions.top("all"):
-        subreddit=thing.subreddit.display_name
-        karma_by_subreddit[subreddit] = (karma_by_subreddit.get(subreddit, 0) + thing.score)
+    # Create a stream of comments for a subreddit
+    for comment in r.subreddit('collegebasketball').stream.comments():
+        reply_str = comment_parser(comment)
+        comment.reply(reply_str)
 
-    print(karma_by_subreddit)
+# Parses a given comment to ensure that it's correctly formatted
+# Simple comparison format: /u/username player1 player2
+def comment_parser(comment):
+    try:
+        comment_tokens = comment.body.split(' ')
+        start_index = comment_tokens.index("/u/" + os.getenv("REDDIT_NAME"))
+        player1 = comment_tokens[start_index+1]
+        player2 = comment_tokens[start_index+2]
+
+        return "placeholder"
+
+    except Exception as e:
+        print(e)
+        return "Sorry, I couldn't get that for you!"
+
+if __name__ == "__main__":
+    main()
