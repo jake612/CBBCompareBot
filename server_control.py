@@ -1,7 +1,8 @@
 import praw
 from dotenv import load_dotenv
 import os
-import time
+import query_handler
+
 load_dotenv()
 
 def main():
@@ -23,11 +24,9 @@ def main():
     except Exception as e:
         print(e)
 
-
     # Create a stream of comments for a subreddit
-    for comment in r.subreddit('collegebasketball').stream.comments():
-        reply_str = comment_parser(comment)
-        comment.reply(reply_str)
+    for comment in praw.models.util.stream_generator(r.inbox.mentions, skip_existing=True):
+        reply = comment_parser(comment)
 
 # Parses a given comment to ensure that it's correctly formatted
 # Simple comparison format: /u/username player1 player2
@@ -35,11 +34,10 @@ def comment_parser(comment):
     try:
         comment_tokens = comment.body.split(' ')
         start_index = comment_tokens.index("/u/" + os.getenv("REDDIT_NAME"))
-        player1 = comment_tokens[start_index+1]
-        player2 = comment_tokens[start_index+2]
+        player1 = comment_tokens[start_index+1] + " " + comment_tokens[start_index+2]
+        player2 = comment_tokens[start_index+3] + " " + comment_tokens[start_index+4]
 
         return "placeholder"
-
     except Exception as e:
         print(e)
         return "Sorry, I couldn't get that for you!"
